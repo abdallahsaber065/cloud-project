@@ -227,21 +227,102 @@
 
 {% block scripts %}
 <script>
-    // Search functionality would be implemented here
+    // Client-side search for the files page
     document.getElementById('search-button').addEventListener('click', function() {
+        filterFiles();
+    });
+    
+    // Also trigger search on Enter key in the search input
+    document.querySelector('.search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            filterFiles();
+        }
+    });
+    
+    function filterFiles() {
         const searchInput = document.querySelector('.search-input');
         const searchTerm = searchInput.value.toLowerCase();
         
-        // Simple client-side search
+        // Show spinner during search
+        const tableBody = document.querySelector('.files-table tbody');
+        const noFiles = document.querySelector('.empty-state');
+        
+        if (tableBody) {
+            // Only apply filtering if we have a table with files
+            let visibleCount = 0;
+            const rows = document.querySelectorAll('.files-table tbody tr');
+            
+            rows.forEach(row => {
+                const fileName = row.querySelector('td:first-child').textContent.toLowerCase();
+                if (fileName.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show a message if no results found
+            const noResults = document.getElementById('no-results');
+            if (visibleCount === 0 && searchTerm !== '') {
+                // Create the no results element if it doesn't exist
+                if (!noResults) {
+                    const noResultsDiv = document.createElement('div');
+                    noResultsDiv.id = 'no-results';
+                    noResultsDiv.className = 'no-results-message';
+                    noResultsDiv.innerHTML = `
+                        <p><i class="fas fa-search"></i> No files match "${searchTerm}"</p>
+                        <button class="button" onclick="resetSearch()">
+                            <i class="fas fa-sync"></i> Show All Files
+                        </button>
+                    `;
+                    tableBody.parentNode.insertAdjacentElement('afterend', noResultsDiv);
+                } else {
+                    noResults.querySelector('p').innerHTML = `<i class="fas fa-search"></i> No files match "${searchTerm}"`;
+                    noResults.style.display = 'block';
+                }
+            } else if (noResults) {
+                noResults.style.display = 'none';
+            }
+        }
+    }
+    
+    function resetSearch() {
+        // Clear search and show all files
+        document.querySelector('.search-input').value = '';
+        
         const rows = document.querySelectorAll('.files-table tbody tr');
         rows.forEach(row => {
-            const fileName = row.querySelector('td:first-child').textContent.toLowerCase();
-            if (fileName.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            row.style.display = '';
         });
-    });
+        
+        const noResults = document.getElementById('no-results');
+        if (noResults) {
+            noResults.style.display = 'none';
+        }
+    }
+    
+    // Add style for no results message
+    const style = document.createElement('style');
+    style.textContent = `
+        .no-results-message {
+            text-align: center;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin: 15px 0;
+            color: #666;
+        }
+        
+        .no-results-message p {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .no-results-message i {
+            margin-right: 8px;
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 {% endblock %}
