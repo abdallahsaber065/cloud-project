@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Successful</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        .download-link {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e7f7e7;
+            border: 1px solid #c7e7c7;
+            border-radius: 5px;
+        }
+
+        a {
+            color: #0066cc;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Upload Successful!</h1>
+    <p>Your file: {{ filename }}</p>
+    <div class="download-link">
+        <p>Download Link (expires in 1 hour):</p>
+        <a href="{{ download_url }}" target="_blank">{{ download_url }}</a>
+        <!-- If using public ACL: <a href="{{ download_url }}" target="_blank">Download {{ filename }}</a> -->
+    </div>
+    <br>
+    <a href="/">Upload another file</a>
+</body>
+
+</html>

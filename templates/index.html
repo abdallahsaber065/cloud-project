@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simple File Share</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        .flash {
+            background: #cee5F5;
+            padding: 10px;
+            border: 1px solid #aacbe2;
+            margin-bottom: 10px;
+        }
+
+        .form-upload {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        input[type=file],
+        input[type=submit] {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Upload a File</h1>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    <div class="form-upload">
+        <form method="post" action="/upload" enctype="multipart/form-data">
+            <p>Select file to upload (Allowed: .txt, .pdf, .png, .jpg, .jpeg, .gif):</p>
+            <input type="file" name="file">
+            <br>
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+</body>
+
+</html>
