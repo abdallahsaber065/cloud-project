@@ -25,9 +25,9 @@ This application uses a multi-tier AWS architecture:
 - **Backend**: Python Flask web server running on EC2
 - **Storage**: Amazon S3 bucket for secure file storage
 - **Networking**: Custom VPC with appropriate security groups
-- **Security**: IAM roles for secure S3 access from EC2
+- **Security**: IAM roles for secure S3 access from EC2  
 
-![Architecture Diagram](https://via.placeholder.com/800x400?text=Architecture+Diagram)
+![Architecture Diagram](images/cloud-diagram.png)
 
 ## 🚀 Deployment
 
