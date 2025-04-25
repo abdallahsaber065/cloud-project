@@ -50,6 +50,10 @@
         border: 1px dashed #ddd;
         border-radius: 5px;
         margin: 10px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 
     .action-buttons {
@@ -63,6 +67,34 @@
         color: #666;
         margin-top: 15px;
         font-style: italic;
+    }
+    
+    .copy-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 5px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .copy-button:hover {
+        background-color: #45a049;
+    }
+    
+    .copy-button i {
+        margin-right: 5px;
+    }
+    
+    .copy-success {
+        font-size: 0.9em;
+        color: #28a745;
+        margin-left: 10px;
+        display: none;
     }
 </style>
 {% endblock %}
@@ -83,8 +115,14 @@
     <div class="download-section">
         <h3 class="download-title"><i class="fas fa-link"></i> Share Link</h3>
         <p>Your file is now available at the following link:</p>
-        <a href="{{ download_url }}" target="_blank" class="download-link">{{ download_url }}</a>
+        <a href="{{ download_url }}" target="_blank" class="download-link" id="share-link" title="{{ download_url }}">{{ download_url }}</a>
         
+        <button class="copy-button" onclick="copyToClipboard()">
+            <i class="fas fa-copy"></i> Copy Link
+        </button>
+        <span id="copy-success" class="copy-success">Link copied!</span>
+        
+        <p class="expiry-note">Note: This link will expire in 7 days.</p>
 
         <div class="action-buttons">
             <a href="/" class="button">
@@ -100,6 +138,45 @@
 
 {% block scripts %}
 <script>
-    // Copy link to clipboard functionality could be added here
+    function copyToClipboard() {
+        // Get the link
+        const link = document.getElementById("share-link").getAttribute("href");
+        
+        // Create a temporary textarea element to copy from
+        const textarea = document.createElement("textarea");
+        textarea.value = link;
+        document.body.appendChild(textarea);
+        
+        // Select and copy the text
+        textarea.select();
+        document.execCommand("copy");
+        
+        // Remove the temporary element
+        document.body.removeChild(textarea);
+        
+        // Show success message
+        const successMsg = document.getElementById("copy-success");
+        successMsg.style.display = "inline";
+        
+        // Hide success message after 2 seconds
+        setTimeout(() => {
+            successMsg.style.display = "none";
+        }, 2000);
+    }
+    
+    // Function to trim long URLs for display
+    function trimUrl() {
+        const linkElement = document.getElementById("share-link");
+        const fullUrl = linkElement.getAttribute("href");
+        
+        // Keep the URL display reasonable (showing start and end with ellipsis in middle)
+        if (fullUrl.length > 70) {
+            const displayText = fullUrl.substring(0, 35) + "..." + fullUrl.substring(fullUrl.length - 25);
+            linkElement.textContent = displayText;
+        }
+    }
+    
+    // Run the trim function when page loads
+    window.onload = trimUrl;
 </script>
 {% endblock %}
