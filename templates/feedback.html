@@ -188,7 +188,16 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Add EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
 <script>
+    // Initialize EmailJS with your public key
+    (function() {
+        // Replace with your actual EmailJS public key
+        emailjs.init("lrWyBRDBfFe-rBTBj");
+    })();
+
     function selectFeedbackType(element, type) {
         // Remove active class from all types
         document.querySelectorAll('.feedback-type').forEach(el => {
@@ -211,11 +220,83 @@
     document.getElementById('feedbackFormElement').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // In a real application, you would send this data to the server
-        // For this demo, we'll just show the success message
+        // Show loading state
+        const submitButton = document.getElementById('submit-feedback');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
         
-        document.getElementById('feedback-form').style.display = 'none';
-        document.getElementById('feedback-success').style.display = 'block';
+        // Collect form data
+        const name = document.getElementById('name').value || 'Anonymous';
+        const email = document.getElementById('email').value || 'noreply@example.com';
+        const subject = document.getElementById('subject').value;
+        const message = document.getElementById('message').value;
+        const feedbackType = document.getElementById('feedback-type').value;
+        
+        // Prepare template parameters
+        const templateParams = {
+            from_name: name,
+            from_email: email,
+            feedback_type: feedbackType,
+            subject: subject,
+            message: message
+        };
+        
+        // Send email using EmailJS
+        // Replace with your actual service ID and template ID
+        emailjs.send('service_d4ew53n', 'template_ilak8kb', templateParams)
+            .then(function(response) {
+                console.log('Email sent successfully!', response);
+                
+                // Show success message
+                document.getElementById('feedback-form').style.display = 'none';
+                document.getElementById('feedback-success').style.display = 'block';
+            })
+            .catch(function(error) {
+                console.error('Email sending failed:', error);
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'feedback-error';
+                errorDiv.innerHTML = `
+                    <p><i class="fas fa-exclamation-circle"></i> Failed to send email. Please try again later.</p>
+                `;
+                
+                // Remove any existing error messages
+                const existingError = document.querySelector('.feedback-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Insert error message at top of form
+                document.getElementById('feedbackFormElement').insertBefore(errorDiv, document.getElementById('feedbackFormElement').firstChild);
+                
+                // Reset button
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            });
     });
+    
+    // Add style for error messages
+    const style = document.createElement('style');
+    style.textContent = `
+        .feedback-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .feedback-error p {
+            margin: 0;
+        }
+        
+        .feedback-error i {
+            margin-right: 8px;
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 import os
 import boto3
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 from botocore.exceptions import NoCredentialsError, ClientError
 from dotenv import load_dotenv
