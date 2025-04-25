@@ -84,9 +84,9 @@ The application is designed to be deployed on AWS infrastructure:
 
 | Name               | Role                   | Responsibilities                                                       |
 | ------------------ | ---------------------- | ---------------------------------------------------------------------- |
-| Abdelrahman Hamada | AWS Account Setup      | Created and configured AWS account                                     |
+| Nour Kamal         | AWS Account Setup      | Created and configured AWS account                                     |
 | Loay Mohamed       | EC2 & IAM Setup        | Launched EC2, configured IAM roles                                     |
-| Nour Kamal         | S3 & File Handling     | Created S3 bucket, implemented file operations                         |
+| Abdelrahman Hamada | S3 & File Handling     | Created S3 bucket, implemented file operations                         |
 | Abdullah Saber     | Web App Development    | Built web interface and backend logic                                  |
 | Ahmed Ihaab        | VPC & Testing          | Network setup, testing, documentation                                  |
 | Yousef Bakr        | Test and Documentation | Tested the app, ensured functionality, and compiled the project report |
