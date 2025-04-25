@@ -218,33 +218,61 @@
 {% block scripts %}
 <script>
     document.getElementById('search-button').addEventListener('click', function() {
+        performSearch();
+    });
+    
+    // Also trigger search on Enter key in the search input
+    document.getElementById('search-query').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            performSearch();
+        }
+    });
+    
+    function performSearch() {
         const searchQuery = document.getElementById('search-query').value;
         const fileType = document.getElementById('file-type').value;
         const dateFilter = document.getElementById('date-filter').value;
         const sortBy = document.getElementById('sort-by').value;
         
-        if (searchQuery.length > 0) {
-            // This would be replaced with a real API call in production
-            searchFiles(searchQuery, fileType, dateFilter, sortBy);
-        }
-    });
+        // Show loading state
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+        
+        // Build the API URL with query parameters
+        const apiUrl = `/api/search?query=${encodeURIComponent(searchQuery)}&type=${fileType}&date=${dateFilter}&sort=${sortBy}`;
+        
+        // Make the API call
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                displaySearchResults(data.files || []);
+            })
+            .catch(error => {
+                console.error('Error during search:', error);
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Error during search</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            });
+    }
     
-    function searchFiles(query, fileType, dateFilter, sortBy) {
-        // Simulate search results for demo
+    function displaySearchResults(results) {
         const resultsContainer = document.getElementById('search-results');
         
         // Clear previous results
         resultsContainer.innerHTML = '';
         
-        // In a real app, this would be an API call
-        // For demo, show some mock results
-        const mockResults = [
-            { name: 'document.pdf', date: 'April 20, 2025', size: '1.5 MB', type: 'pdf' },
-            { name: 'image.jpg', date: 'April 18, 2025', size: '2.3 MB', type: 'image' },
-            { name: 'notes.txt', date: 'April 15, 2025', size: '0.1 MB', type: 'text' }
-        ];
-        
-        if (mockResults.length === 0) {
+        if (results.length === 0) {
             resultsContainer.innerHTML = `
                 <div class="no-results">
                     <div class="no-results-icon">
@@ -258,26 +286,63 @@
         }
         
         // Create and append result cards
-        mockResults.forEach(result => {
+        results.forEach(result => {
             const template = document.getElementById('result-template');
             const resultCard = template.content.cloneNode(true);
             
             // Set file type icon based on file extension
             const iconElement = resultCard.querySelector('.result-icon i');
-            if (result.type === 'pdf') {
+            const filename = result.filename.toLowerCase();
+            
+            if (filename.endsWith('.pdf')) {
                 iconElement.className = 'fas fa-file-pdf';
-            } else if (result.type === 'image') {
-                iconElement.className = 'fas fa-file-image';
-            } else if (result.type === 'text') {
+            } else if (filename.endsWith('.txt')) {
                 iconElement.className = 'fas fa-file-alt';
+            } else if (filename.endsWith('.doc') || filename.endsWith('.docx')) {
+                iconElement.className = 'fas fa-file-word';
+            } else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg') || 
+                      filename.endsWith('.png') || filename.endsWith('.gif')) {
+                iconElement.className = 'fas fa-file-image';
             }
             
-            resultCard.querySelector('.result-name').textContent = result.name;
-            resultCard.querySelector('.date').textContent = result.date;
-            resultCard.querySelector('.size').textContent = result.size;
+            resultCard.querySelector('.result-name').textContent = result.filename;
+            resultCard.querySelector('.date').textContent = result.last_modified;
+            resultCard.querySelector('.size').textContent = formatFileSize(result.size);
+            
+            // Set download link
+            const downloadBtn = resultCard.querySelector('.download-btn');
+            downloadBtn.href = `/download/${encodeURIComponent(result.filename)}`;
             
             resultsContainer.appendChild(resultCard);
         });
     }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Add style for loading state
+    const style = document.createElement('style');
+    style.textContent = `
+        .loading-state {
+            text-align: center;
+            padding: 40px 0;
+            font-size: 1.2em;
+            color: #666;
+        }
+        
+        .loading-state i {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 {% endblock %}

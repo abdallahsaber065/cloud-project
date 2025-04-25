@@ -196,6 +196,82 @@ def delete_file(filename):
     return redirect(url_for("files"))
 
 
+@app.route("/api/search", methods=["GET"])
+def search_files():
+    """API endpoint for searching files with various filters."""
+    # Get search parameters
+    query = request.args.get("query", "").lower()
+    file_type = request.args.get("type", "all")
+    date_filter = request.args.get("date", "all")
+    sort_by = request.args.get("sort", "name")
+    
+    try:
+        # Get all files first
+        all_files = list_uploaded_files()
+        results = []
+        
+        # Apply search filtering
+        for file in all_files:
+            filename = file['filename'].lower()
+            
+            # Filter by search query
+            if query and query not in filename:
+                continue
+                
+            # Filter by file type
+            if file_type != "all":
+                if file_type == "image" and not filename.endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                    continue
+                elif file_type == "document" and not filename.endswith(('.doc', '.docx', '.pdf', '.txt')):
+                    continue
+                elif file_type == "pdf" and not filename.endswith('.pdf'):
+                    continue
+                elif file_type == "text" and not filename.endswith('.txt'):
+                    continue
+            
+            # Filter by date
+            if date_filter != "all":
+                file_date = file['last_modified']
+                today = datetime.datetime.now()
+                
+                if date_filter == "today" and not file_date.startswith(today.strftime('%Y-%m-%d')):
+                    continue
+                    
+                elif date_filter == "week":
+                    # Check if file is within the last 7 days
+                    file_datetime = datetime.datetime.strptime(file_date, '%Y-%m-%d %H:%M:%S')
+                    week_ago = today - datetime.timedelta(days=7)
+                    if file_datetime < week_ago:
+                        continue
+                        
+                elif date_filter == "month":
+                    # Check if file is within the current month
+                    if not file_date.startswith(today.strftime('%Y-%m')):
+                        continue
+                        
+                elif date_filter == "year":
+                    # Check if file is within the current year
+                    if not file_date.startswith(today.strftime('%Y')):
+                        continue
+            
+            # Add to results if it passed all filters
+            results.append(file)
+        
+        # Sort results
+        if sort_by == "name":
+            results.sort(key=lambda x: x['filename'])
+        elif sort_by == "date":
+            results.sort(key=lambda x: x['last_modified'], reverse=True)
+        elif sort_by == "size":
+            results.sort(key=lambda x: x['size'], reverse=True)
+            
+        return {"files": results}
+        
+    except Exception as e:
+        app.logger.error(f"Search error: {e}")
+        return {"error": str(e)}, 500
+
+
 if __name__ == "__main__":
     # Print useful debug info at startup
     app.logger.info(f"Starting app with bucket: {S3_BUCKET}, region: {AWS_REGION}")
