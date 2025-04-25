@@ -14,12 +14,43 @@ S3_BUCKET = os.environ.get(
     "S3_BUCKET_NAME", "file-share-app-project-bucket-000"
 )  
 
-AWS_REGION = os.environ.get("AWS_REGION", "us-east-1") 
+# Update region to match your CLI region
+AWS_REGION = os.environ.get("AWS_REGION", "eu-north-1") 
 
 # File type validation
 ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
 
-s3_client = boto3.client("s3", region_name=AWS_REGION)
+# Remove the print statements that expose credential information
+AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+
+# Create S3 client with explicit credential handling and correct endpoint configuration
+if AWS_ACCESS_KEY and AWS_SECRET_KEY:
+    s3_client = boto3.client(
+        "s3", 
+        region_name=AWS_REGION,
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_SECRET_KEY,
+        # Explicitly set the endpoint URL to match the region
+        endpoint_url=f"https://s3.{AWS_REGION}.amazonaws.com"
+    )
+    print("Using explicitly provided AWS credentials")
+else:
+    # Fall back to default credential resolution with correct endpoint
+    s3_client = boto3.client(
+        "s3", 
+        region_name=AWS_REGION,
+        # Explicitly set the endpoint URL to match the region
+        endpoint_url=f"https://s3.{AWS_REGION}.amazonaws.com"
+    )
+    print(f"Using default AWS credential chain with region: {AWS_REGION}")
+
+# Add a test to verify credentials are working
+try:
+    s3_client.list_buckets()
+    print("AWS credentials are valid - successfully connected to AWS")
+except Exception as e:
+    print(f"AWS credential validation failed: {e}")
 
 
 def allowed_file(filename):
@@ -76,11 +107,14 @@ def upload_file():
             )
 
         except NoCredentialsError:
-            flash("AWS credentials not found.")
+            error_msg = "AWS credentials not found. Please check your environment variables or AWS config files."
+            app.logger.error(error_msg)
+            flash(error_msg)
             return redirect(url_for("index"))
         except ClientError as e:
-            flash(f"Failed to upload file: {e}")
-            app.logger.error(f"S3 Upload Error: {e}")  # Log the error for debugging
+            error_msg = f"Failed to upload file: {e}"
+            app.logger.error(f"S3 Upload Error: {e}")
+            flash(error_msg)
             return redirect(url_for("index"))
         except Exception as e:
             flash(f"An unexpected error occurred: {e}")
@@ -93,6 +127,10 @@ def upload_file():
 
 
 if __name__ == "__main__":
+    # Print useful debug info at startup
+    app.logger.info(f"Starting app with bucket: {S3_BUCKET}, region: {AWS_REGION}")
+    app.logger.info(f"AWS_ACCESS_KEY_ID environment variable is {'set' if AWS_ACCESS_KEY else 'not set'}")
+    
     # Run on 0.0.0.0 to be accessible externally, port 80 requires sudo or other setup
     # For EC2 deployment, a production server like Gunicorn/Waitress is better.
     # Running on port 5000 for local testing. UserData will handle running on port 80.
