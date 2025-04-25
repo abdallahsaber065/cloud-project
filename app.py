@@ -19,7 +19,7 @@ S3_BUCKET = os.environ.get(
 AWS_REGION = os.environ.get("AWS_REGION", "eu-north-1") 
 
 # File type validation
-ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
+ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif", "doc", "docx", "xls", "xlsx", "csv", "mp4", "mp3"}
 
 # Remove the print statements that expose credential information
 AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY_ID")
@@ -78,29 +78,20 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)  # Sanitize filename
         try:
-            # Option 1: Upload with public read ACL (Simpler for direct links, less secure)
+            # Upload file without ACL parameter since the bucket doesn't support ACLs
             s3_client.upload_fileobj(
                 file,
                 S3_BUCKET,
-                filename,
-                ExtraArgs={'ACL': 'public-read'}
+                filename
+                # No ACL needed - bucket has ACLs disabled
             )
-            download_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{filename}"
-
-            # Option 2 (commented out): Upload private and generate Presigned URL (More secure)
-            # s3_client.upload_fileobj(
-            #     file,
-            #     S3_BUCKET,
-            #     filename,
-            #     # No ACL needed if bucket is private and accessed via presigned URL
-            # )
-            #
-            # # Generate a presigned URL for temporary access (expires in 3600 seconds = 1 hour)
-            # download_url = s3_client.generate_presigned_url(
-            #     "get_object",
-            #     Params={"Bucket": S3_BUCKET, "Key": filename},
-            #     ExpiresIn=3600,  # URL expiry time in seconds
-            # )
+            
+            # Generate a presigned URL for access (expires in 3600 seconds = 1 hour)
+            download_url = s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": S3_BUCKET, "Key": filename},
+                ExpiresIn=604800,  # URL expiry time in seconds (7 days = 604800 seconds)
+            )
 
             flash(f'File "{filename}" uploaded successfully!')
             return render_template(
@@ -171,11 +162,11 @@ def feedback():
 def download_file(filename):
     """Generate a presigned URL for downloading a specific file."""
     try:
-        # Generate a presigned URL for permanent access (no expiration)
+        # Generate a presigned URL with expiration within AWS limits (less than 1 week)
         download_url = s3_client.generate_presigned_url(
             "get_object",
             Params={"Bucket": S3_BUCKET, "Key": filename},
-            ExpiresIn=31536000,  # URL expiry time in seconds (1 year = 31536000 seconds)
+            ExpiresIn=604800 - 60,  # URL expiry time in seconds (1 week minus 1 minute to be safe)
         )
         return redirect(download_url)
     except Exception as e:
@@ -222,13 +213,18 @@ def search_files():
             if file_type != "all":
                 if file_type == "image" and not filename.endswith(('.jpg', '.jpeg', '.png', '.gif')):
                     continue
-                elif file_type == "document" and not filename.endswith(('.doc', '.docx', '.pdf', '.txt')):
+                elif file_type == "document" and not filename.endswith(('.doc', '.docx', '.pdf', '.txt', '.xls', '.xlsx', '.csv')):
                     continue
                 elif file_type == "pdf" and not filename.endswith('.pdf'):
                     continue
                 elif file_type == "text" and not filename.endswith('.txt'):
                     continue
-            
+                elif file_type == "spreadsheet" and not filename.endswith(('.xls', '.xlsx', '.csv')):
+                    continue
+                elif file_type == "video" and not filename.endswith('.mp4'):
+                    continue
+                elif file_type == "audio" and not filename.endswith('.mp3'):
+                    continue
             # Filter by date
             if date_filter != "all":
                 file_date = file['last_modified']
