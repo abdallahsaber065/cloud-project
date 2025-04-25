@@ -1,6 +1,6 @@
 import os
 import boto3
-from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from botocore.exceptions import NoCredentialsError, ClientError
 from dotenv import load_dotenv
@@ -79,28 +79,28 @@ def upload_file():
         filename = secure_filename(file.filename)  # Sanitize filename
         try:
             # Option 1: Upload with public read ACL (Simpler for direct links, less secure)
-            # s3_client.upload_fileobj(
-            #     file,
-            #     S3_BUCKET,
-            #     filename,
-            #     ExtraArgs={'ACL': 'public-read'}
-            # )
-            # download_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{filename}"
-
-            # Option 2: Upload private and generate Presigned URL (More secure)
             s3_client.upload_fileobj(
                 file,
                 S3_BUCKET,
                 filename,
-                # No ACL needed if bucket is private and accessed via presigned URL
+                ExtraArgs={'ACL': 'public-read'}
             )
+            download_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{filename}"
 
-            # Generate a presigned URL for temporary access (expires in 3600 seconds = 1 hour)
-            download_url = s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": S3_BUCKET, "Key": filename},
-                ExpiresIn=3600,  # URL expiry time in seconds
-            )
+            # Option 2 (commented out): Upload private and generate Presigned URL (More secure)
+            # s3_client.upload_fileobj(
+            #     file,
+            #     S3_BUCKET,
+            #     filename,
+            #     # No ACL needed if bucket is private and accessed via presigned URL
+            # )
+            #
+            # # Generate a presigned URL for temporary access (expires in 3600 seconds = 1 hour)
+            # download_url = s3_client.generate_presigned_url(
+            #     "get_object",
+            #     Params={"Bucket": S3_BUCKET, "Key": filename},
+            #     ExpiresIn=3600,  # URL expiry time in seconds
+            # )
 
             flash(f'File "{filename}" uploaded successfully!')
             return render_template(
@@ -171,11 +171,11 @@ def feedback():
 def download_file(filename):
     """Generate a presigned URL for downloading a specific file."""
     try:
-        # Generate a presigned URL for temporary access (expires in 3600 seconds = 1 hour)
+        # Generate a presigned URL for permanent access (no expiration)
         download_url = s3_client.generate_presigned_url(
             "get_object",
             Params={"Bucket": S3_BUCKET, "Key": filename},
-            ExpiresIn=3600,  # URL expiry time in seconds
+            ExpiresIn=31536000,  # URL expiry time in seconds (1 year = 31536000 seconds)
         )
         return redirect(download_url)
     except Exception as e:
