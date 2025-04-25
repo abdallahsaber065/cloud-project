@@ -1,55 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout/base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Simple File Share</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 20px;
-        }
+{% block title %}Simple File Share - Upload{% endblock %}
 
-        .flash {
-            background: #cee5F5;
-            padding: 10px;
-            border: 1px solid #aacbe2;
-            margin-bottom: 10px;
-        }
+{% block additional_styles %}
+<style>
+    .form-upload {
+        border: 1px solid #ddd;
+        padding: 30px;
+        border-radius: 8px;
+        background-color: #fcfcfc;
+    }
 
-        .form-upload {
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
+    .form-title {
+        margin-bottom: 20px;
+        color: var(--secondary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+    }
 
-        input[type=file],
-        input[type=submit] {
-            margin-top: 10px;
-        }
-    </style>
-</head>
+    .file-input-wrapper {
+        margin: 20px 0;
+    }
 
-<body>
-    <h1>Upload a File</h1>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div class="flash">
-        {% for message in messages %}
-        <p>{{ message }}</p>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    .file-input {
+        display: none;
+    }
+
+    .file-input-label {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .file-input-label:hover {
+        background-color: #2980b9;
+    }
+
+    .file-input-name {
+        margin-left: 10px;
+        font-style: italic;
+    }
+
+    .submit-btn {
+        padding: 10px 20px;
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .submit-btn:hover {
+        background-color: #1a252f;
+    }
+
+    .upload-guide {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 30px;
+    }
+
+    .upload-guide h3 {
+        color: var(--secondary-color);
+        margin-top: 0;
+    }
+
+    .upload-guide ul {
+        padding-left: 20px;
+    }
+
+    .allowed-types {
+        margin-top: 10px;
+        color: #666;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
     <div class="form-upload">
+        <h2 class="form-title">Upload a File</h2>
+        
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
         <form method="post" action="/upload" enctype="multipart/form-data">
-            <p>Select file to upload (Allowed: .txt, .pdf, .png, .jpg, .jpeg, .gif):</p>
-            <input type="file" name="file">
-            <br>
-            <input type="submit" value="Upload">
+            <div class="file-input-wrapper">
+                <label class="file-input-label" for="file-input">
+                    <i class="fas fa-cloud-upload-alt"></i> Choose File
+                </label>
+                <input type="file" name="file" id="file-input" class="file-input">
+                <span class="file-input-name">No file chosen</span>
+            </div>
+            
+            <p class="allowed-types">Allowed file types: .txt, .pdf, .png, .jpg, .jpeg, .gif</p>
+            
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-upload"></i> Upload
+            </button>
         </form>
     </div>
-</body>
 
-</html>
+    <div class="upload-guide">
+        <h3><i class="fas fa-info-circle"></i> Upload Guide</h3>
+        <ul>
+            <li>Maximum file size: 10MB</li>
+            <li>Files are securely stored in the cloud</li>
+            <li>Download links expire after 1 hour for security</li>
+            <li>You can view and manage your uploaded files in the Files section</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Display selected filename
+    const fileInput = document.getElementById('file-input');
+    const fileInputName = document.querySelector('.file-input-name');
+
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            fileInputName.textContent = this.files[0].name;
+        } else {
+            fileInputName.textContent = 'No file chosen';
+        }
+    });
+</script>
+{% endblock %}

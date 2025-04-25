@@ -4,6 +4,7 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from botocore.exceptions import NoCredentialsError, ClientError
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -124,6 +125,75 @@ def upload_file():
     else:
         flash("File type not allowed.")
         return redirect(url_for("index"))
+
+
+# Function to list files in the S3 bucket
+def list_uploaded_files():
+    try:
+        response = s3_client.list_objects_v2(Bucket=S3_BUCKET)
+        if 'Contents' in response:
+            files = [
+                {
+                    'filename': obj['Key'],
+                    'last_modified': obj['LastModified'].strftime('%Y-%m-%d %H:%M:%S'),
+                    'size': obj['Size']
+                }
+                for obj in response['Contents']
+            ]
+            return files
+        else:
+            return []
+    except ClientError as e:
+        app.logger.error(f"Failed to list files: {e}")
+        return []
+
+
+@app.route("/files")
+def files():
+    """Renders a page displaying uploaded files."""
+    uploaded_files = list_uploaded_files()
+    return render_template("files.html", files=uploaded_files)
+
+
+@app.route("/search")
+def search():
+    """Renders the search page."""
+    return render_template("search.html")
+
+
+@app.route("/feedback")
+def feedback():
+    """Renders the feedback page."""
+    return render_template("feedback.html")
+
+
+@app.route("/download/<filename>")
+def download_file(filename):
+    """Generate a presigned URL for downloading a specific file."""
+    try:
+        # Generate a presigned URL for temporary access (expires in 3600 seconds = 1 hour)
+        download_url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": S3_BUCKET, "Key": filename},
+            ExpiresIn=3600,  # URL expiry time in seconds
+        )
+        return redirect(download_url)
+    except Exception as e:
+        app.logger.error(f"Error generating download URL: {e}")
+        flash(f"Error generating download URL: {str(e)}")
+        return redirect(url_for("files"))
+
+
+@app.route("/delete/<filename>")
+def delete_file(filename):
+    """Delete a file from the S3 bucket."""
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET, Key=filename)
+        flash(f"File '{filename}' was successfully deleted.")
+    except Exception as e:
+        app.logger.error(f"Error deleting file: {e}")
+        flash(f"Error deleting file: {str(e)}")
+    return redirect(url_for("files"))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,283 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Search Files{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .search-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-header {
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .search-form {
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+
+    .search-input-group {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px 0 0 4px;
+        font-size: 16px;
+    }
+
+    .search-button {
+        padding: 0 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .search-button:hover {
+        background-color: #2980b9;
+    }
+
+    .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .filter-group label {
+        margin-right: 10px;
+        font-weight: 500;
+    }
+
+    .filter-select {
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .search-results {
+        margin-top: 30px;
+    }
+
+    .result-card {
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s;
+    }
+
+    .result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .result-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+
+    .result-details {
+        flex-grow: 1;
+    }
+
+    .result-name {
+        margin: 0 0 5px;
+        color: var(--secondary-color);
+    }
+
+    .result-meta {
+        display: flex;
+        gap: 20px;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .result-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    .no-results-icon {
+        font-size: 3rem;
+        color: #94a3b8;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="search-container">
+        <div class="search-header">
+            <h2><i class="fas fa-search"></i> Search Files</h2>
+            <p>Find your files by name, type, or upload date</p>
+        </div>
+
+        <div class="search-form">
+            <div class="search-input-group">
+                <input type="text" class="search-input" id="search-query" placeholder="Enter file name or keywords...">
+                <button class="search-button" id="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="file-type">File Type:</label>
+                    <select class="filter-select" id="file-type">
+                        <option value="all">All Types</option>
+                        <option value="image">Images</option>
+                        <option value="document">Documents</option>
+                        <option value="pdf">PDF</option>
+                        <option value="text">Text</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="date-filter">Date:</label>
+                    <select class="filter-select" id="date-filter">
+                        <option value="all">Any Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-by">Sort By:</label>
+                    <select class="filter-select" id="sort-by">
+                        <option value="name">Name</option>
+                        <option value="date">Date (Newest First)</option>
+                        <option value="size">Size</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-results" id="search-results">
+            <div class="no-results">
+                <div class="no-results-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3>Enter a search term to find files</h3>
+                <p>Your search results will appear here</p>
+            </div>
+
+            <!-- Search results will be populated here via JavaScript -->
+        </div>
+    </div>
+</div>
+
+<template id="result-template">
+    <div class="result-card">
+        <div class="result-icon">
+            <i class="fas fa-file"></i>
+        </div>
+        <div class="result-details">
+            <h3 class="result-name">filename.ext</h3>
+            <div class="result-meta">
+                <span><i class="fas fa-clock"></i> <span class="date">April 22, 2025</span></span>
+                <span><i class="fas fa-weight"></i> <span class="size">1.2 MB</span></span>
+            </div>
+        </div>
+        <div class="result-actions">
+            <a href="#" class="button download-btn">
+                <i class="fas fa-download"></i> Download
+            </a>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('search-button').addEventListener('click', function() {
+        const searchQuery = document.getElementById('search-query').value;
+        const fileType = document.getElementById('file-type').value;
+        const dateFilter = document.getElementById('date-filter').value;
+        const sortBy = document.getElementById('sort-by').value;
+        
+        if (searchQuery.length > 0) {
+            // This would be replaced with a real API call in production
+            searchFiles(searchQuery, fileType, dateFilter, sortBy);
+        }
+    });
+    
+    function searchFiles(query, fileType, dateFilter, sortBy) {
+        // Simulate search results for demo
+        const resultsContainer = document.getElementById('search-results');
+        
+        // Clear previous results
+        resultsContainer.innerHTML = '';
+        
+        // In a real app, this would be an API call
+        // For demo, show some mock results
+        const mockResults = [
+            { name: 'document.pdf', date: 'April 20, 2025', size: '1.5 MB', type: 'pdf' },
+            { name: 'image.jpg', date: 'April 18, 2025', size: '2.3 MB', type: 'image' },
+            { name: 'notes.txt', date: 'April 15, 2025', size: '0.1 MB', type: 'text' }
+        ];
+        
+        if (mockResults.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>No files found</h3>
+                    <p>Try adjusting your search or filters</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Create and append result cards
+        mockResults.forEach(result => {
+            const template = document.getElementById('result-template');
+            const resultCard = template.content.cloneNode(true);
+            
+            // Set file type icon based on file extension
+            const iconElement = resultCard.querySelector('.result-icon i');
+            if (result.type === 'pdf') {
+                iconElement.className = 'fas fa-file-pdf';
+            } else if (result.type === 'image') {
+                iconElement.className = 'fas fa-file-image';
+            } else if (result.type === 'text') {
+                iconElement.className = 'fas fa-file-alt';
+            }
+            
+            resultCard.querySelector('.result-name').textContent = result.name;
+            resultCard.querySelector('.date').textContent = result.date;
+            resultCard.querySelector('.size').textContent = result.size;
+            
+            resultsContainer.appendChild(resultCard);
+        });
+    }
+</script>
+{% endblock %}

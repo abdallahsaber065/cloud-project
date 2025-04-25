@@ -1,0 +1,30 @@
+<header>
+    <div class="header-top">
+        <div class="logo">
+            <h1><i class="fas fa-cloud-upload-alt"></i> Simple File Share</h1>
+        </div>
+    </div>
+    {% include 'layout/navigation.html' %}
+</header>
+
+<style>
+    header {
+        background-color: var(--secondary-color);
+        color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .header-top {
+        padding: 15px 25px;
+        text-align: center;
+    }
+    
+    .logo h1 {
+        margin: 0;
+        font-size: 28px;
+    }
+    
+    .logo i {
+        margin-right: 10px;
+    }
+</style>

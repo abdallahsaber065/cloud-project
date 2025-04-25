@@ -1,0 +1,221 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Feedback - Simple File Share{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .feedback-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .feedback-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .feedback-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--secondary-color);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 15px;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+
+    textarea.form-control {
+        min-height: 150px;
+        resize: vertical;
+    }
+
+    .submit-btn {
+        padding: 12px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+    .submit-btn:hover {
+        background-color: #2980b9;
+    }
+
+    .feedback-types {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .feedback-type {
+        flex: 1;
+        min-width: 120px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .feedback-type:hover {
+        background-color: #f9f9f9;
+    }
+
+    .feedback-type.active {
+        border-color: var(--primary-color);
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+
+    .feedback-type-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: var(--secondary-color);
+    }
+
+    .feedback-success {
+        text-align: center;
+        padding: 40px 20px;
+        display: none;
+    }
+
+    .feedback-success-icon {
+        font-size: 4rem;
+        color: #2ecc71;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="feedback-container">
+        <div class="feedback-header">
+            <h2><i class="fas fa-comment"></i> We Value Your Feedback</h2>
+            <p>Help us improve Simple File Share by sharing your thoughts and experiences</p>
+        </div>
+
+        <div class="feedback-form" id="feedback-form">
+            <div class="feedback-types">
+                <div class="feedback-type" data-type="suggestion" onclick="selectFeedbackType(this, 'suggestion')">
+                    <div class="feedback-type-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Suggestion</h3>
+                </div>
+                <div class="feedback-type" data-type="problem" onclick="selectFeedbackType(this, 'problem')">
+                    <div class="feedback-type-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Problem</h3>
+                </div>
+                <div class="feedback-type" data-type="compliment" onclick="selectFeedbackType(this, 'compliment')">
+                    <div class="feedback-type-icon">
+                        <i class="fas fa-thumbs-up"></i>
+                    </div>
+                    <h3>Compliment</h3>
+                </div>
+            </div>
+
+            <form id="feedbackFormElement">
+                <input type="hidden" id="feedback-type" name="feedback-type" value="suggestion">
+
+                <div class="form-group">
+                    <label for="name">Your Name (Optional)</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your name">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address (Optional)</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" class="form-control" id="subject" name="subject" placeholder="Brief description of your feedback" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Your Feedback</label>
+                    <textarea class="form-control" id="message" name="message" placeholder="Please provide details about your suggestion, issue, or compliment" required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-feedback">
+                    <i class="fas fa-paper-plane"></i> Submit Feedback
+                </button>
+            </form>
+        </div>
+
+        <div class="feedback-success" id="feedback-success">
+            <div class="feedback-success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Thank You For Your Feedback!</h2>
+            <p>We appreciate you taking the time to provide feedback. Your input is valuable to us and helps us improve our service.</p>
+            <a href="/" class="button">
+                <i class="fas fa-home"></i> Return to Homepage
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function selectFeedbackType(element, type) {
+        // Remove active class from all types
+        document.querySelectorAll('.feedback-type').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        // Add active class to selected type
+        element.classList.add('active');
+        
+        // Update hidden input value
+        document.getElementById('feedback-type').value = type;
+    }
+    
+    // Initialize the form with 'suggestion' selected
+    document.addEventListener('DOMContentLoaded', function() {
+        selectFeedbackType(document.querySelector('[data-type="suggestion"]'), 'suggestion');
+    });
+    
+    // Handle form submission
+    document.getElementById('feedbackFormElement').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // In a real application, you would send this data to the server
+        // For this demo, we'll just show the success message
+        
+        document.getElementById('feedback-form').style.display = 'none';
+        document.getElementById('feedback-success').style.display = 'block';
+    });
+</script>
+{% endblock %}
